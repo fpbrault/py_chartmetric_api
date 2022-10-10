@@ -81,3 +81,23 @@ def get_artists_by_stats(metric_type: str, min_value: int, max_value: int, limit
             more_results = 0
     # print(results)
     return {"artists_by_stats": results}
+
+
+def get_artist_metadata(artist_id: str):
+    """requests and returns metadata for a given artist
+
+    Parameters:
+        artist_id (str): chartmetric id for the requested artist
+
+    Returns:
+        Response: response from the api
+    """
+    url = "https://api.chartmetric.com/api/artist/" + artist_id
+
+    try:
+        response = utility.get_data_from_chartmetrics(url)
+    except requests.exceptions.RequestException as error:
+        raise SystemExit(error) from error
+    if response.status_code != 200:
+        raise ConnectionError(response.text)
+    return {"artist_metadata": response.json().get("obj")}
