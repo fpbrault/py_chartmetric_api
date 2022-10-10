@@ -37,20 +37,19 @@ def get_refresh_token():
     return access_token
 
 
-def get_data_from_chartmetrics(url: str, params: str, offset: str, limit: int):
+def get_data_from_chartmetrics(url: str, params: str = None):
     """requests and returns data from chartmetrics
 
     Parameters:
         url (str): url of the api route to usee
         param (str): extra parameters for the request
-        offset (str): offset for results
-        limit (int): result limit
 
     Returns:
         Response: response from the api
     """
 
-    params = params | {"offset": offset, "limit": limit}
+    if params is None:
+        params = {}
     token = {"authorization": "Bearer " + get_refresh_token()}
 
     response = requests.get(url=url, params=params, headers=token, timeout=60)

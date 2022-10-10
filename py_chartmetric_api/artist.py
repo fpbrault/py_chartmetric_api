@@ -4,26 +4,6 @@ import requests
 from . import utility
 
 
-def get_data_from_chartmetrics(url: str, params: str, offset: str, limit: int):
-    """requests and returns data from chartmetrics
-
-    Parameters:
-        url (str): url of the api route to usee
-        param (str): extra parameters for the request
-        offset (str): offset for results
-        limit (int): result limit
-
-    Returns:
-        Response: response from the api
-    """
-
-    params = params | {"offset": offset, "limit": limit}
-    token = {"authorization": "Bearer " + utility.get_refresh_token()}
-
-    response = requests.get(url=url, params=params, headers=token, timeout=60)
-    return response
-
-
 def get_artists_with_filters(
     offset: str,
     limit: int,
@@ -49,7 +29,8 @@ def get_artists_with_filters(
             limit = offset + limit - 10000
 
     try:
-        response = get_data_from_chartmetrics(url, params, offset, limit)
+        params = params | {"offset": offset, "limit": limit}
+        response = utility.get_data_from_chartmetrics(url, params)
     except requests.exceptions.RequestException as error:
         raise SystemExit(error) from error
     if response.status_code != 200:
@@ -57,7 +38,7 @@ def get_artists_with_filters(
     return {"artists_with_filters": response.json().get("obj").get("obj")}
 
 
-def get_artists_by_stats(metric_type: str, min_value: int, max_value: int, limit: int, params: str = {}):
+def get_artists_by_stats(metric_type: str, min_value: int, max_value: int, limit: int, params: str = None):
     """requests and returns artists data depending on a performance metric. The type of metric must be specified, as do the min and max value.
 
     A maximum of 200 entries can be returned but multiple requests will be made up to the provided limit, up to 100000 results or until all results have been returned.
@@ -77,12 +58,15 @@ def get_artists_by_stats(metric_type: str, min_value: int, max_value: int, limit
     i = 0
     results = []
 
+    if params is None:
+        params = {}
+
     params = {"min": min_value, "max": max_value} | params
 
     while more_results == 1:
         url = "https://api.chartmetric.com/api/artist/" + metric_type + "/list"
 
-        response = get_data_from_chartmetrics(url, params, str(200 * i), 200)
+        response = utility.get_data_from_chartmetrics(url, params | {"offset": str(200 * i), "limit": 200})
 
         data = response.json()
         results = results + data.get("obj").get("data")
